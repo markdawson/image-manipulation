@@ -1,4 +1,5 @@
 from PIL import Image
+from random import random
 
 
 def downsize(name, downsize_factor=4):
@@ -9,11 +10,37 @@ def downsize(name, downsize_factor=4):
     im.save(name)
 
 
+def get_pixel_neighbors(im, x, y):
+    try:
+        # pixels = [
+        #     im.getpixel((x - 1, y - 1)),
+        #     im.getpixel((x - 1, y)),
+        #     im.getpixel((x - 1, y + 1)),
+        #
+        #     im.getpixel((x, y - 1)),
+        #     im.getpixel((x, y + 1)),
+        #
+        #     im.getpixel((x + 1, y - 1)),
+        #     im.getpixel((x + 1, y)),
+        #     im.getpixel((x + 1, y + 1)),
+        # ]
+
+        pixels = []
+        for x_offset in range(-5, 6):
+            for y_offset in range(-5, 6):
+                neighbor_pixel = im.getpixel((x + x_offset, y + y_offset))
+                pixels.append(neighbor_pixel)
+
+        return pixels
+    except IndexError:
+        return [im.getpixel((x, y))]
+
+
+
+
 def run():
     im = Image.open("Beach_Image_Small.png")
     im = im.convert("RGB")
-
-    # print(im.format, im.size, im.mode)
 
     size = im.width * im.height
 
@@ -25,8 +52,17 @@ def run():
             i += 1
 
             # Important Part
-            r, g, b = im.getpixel((x, y))
-            im.putpixel((x, y), (r + 15, g, b))
+            # r, g, b = im.getpixel((x, y))
+
+            neighbors = get_pixel_neighbors(im, x, y)
+
+            # [(r, g, b), (r, g, b)... ]
+
+            avg_r = round(sum(p[0] for p in neighbors) / len(neighbors))
+            avg_g = round(sum(p[1] for p in neighbors) / len(neighbors))
+            avg_b = round(sum(p[2] for p in neighbors) / len(neighbors))
+
+            im.putpixel((x, y), (avg_r, avg_g, avg_b))
 
             if i in print_points:
                 print(round((i / size), 1) * 100)
@@ -38,4 +74,3 @@ def run():
 if __name__ == "__main__":
     run()
     # print("done")
-
