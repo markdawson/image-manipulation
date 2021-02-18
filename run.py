@@ -1,5 +1,6 @@
 from PIL import Image
 from random import random
+import imageio
 
 
 def downsize(name, downsize_factor=4):
@@ -36,11 +37,7 @@ def get_pixel_neighbors(im, x, y):
     except IndexError:
         return [im.getpixel((x, y))]
 
-
-def run():
-    im = Image.open("Beach_Image_Small.png")
-    im = im.convert("RGB")
-
+def apply_red_linear(im, image_name, red_amount):
     size = im.width * im.height
 
     print_points = [x * (size // 10) for x in range(1, 11)]
@@ -50,27 +47,59 @@ def run():
         for y in range(im.height):
             i += 1
 
-            # if random() < 0.99:
-            r, g, b = im.getpixel((x, y))
-            im.putpixel((x, y), (255, g, b))
-
-            # Important Part
-
-            # neighbors = get_pixel_neighbors(im, x, y)
-
-            # [(r, g, b), (r, g, b)... ]
-
-            # avg_r = round(sum(p[0] for p in neighbors) / len(neighbors))
-            # avg_g = round(sum(p[1] for p in neighbors) / len(neighbors))
-            # avg_b = round(sum(p[2] for p in neighbors) / len(neighbors))
-            #
-            # im.putpixel((x, y), (avg_r, avg_g, avg_b))
+            if random() < red_amount:
+                r, g, b = im.getpixel((x, y))
+                im.putpixel((x, y), (255, g, b))
 
             if i in print_points:
                 print(round((i / size), 1) * 100)
 
-    im.save("Beach_Image_Small2.png")
-    im.show()
+    im.save(image_name)
+
+
+    return image_name
+
+def apply_red_exponential(previous_image, image_name, red_amount):
+    im = Image.open(previous_image)
+    im = im.convert("RGB")
+    size = im.width * im.height
+
+    print_points = [x * (size // 10) for x in range(1, 11)]
+
+    i = 0
+    for x in range(im.width):
+        for y in range(im.height):
+            i += 1
+
+            if random() < red_amount:
+                r, g, b = im.getpixel((x, y))
+                im.putpixel((x, y), (255, g, b))
+
+            if i in print_points:
+                print(round((i / size), 1) * 100)
+
+    im.save(image_name)
+
+
+    return image_name
+
+
+def run():
+    gif_linear = []
+    gif_exponential =[]
+    im = Image.open("images/Beach_Image_Small.png")
+    im = im.convert("RGB")
+
+    for i in range(10):
+        each_image_linear = imageio.imread(apply_red_linear(im,"images/Beach_Image_Linear"+str(i)+".png",i*.1))# here read all images
+        gif_linear.append(each_image_linear)
+        each_image_exponential = imageio.imread(apply_red_exponential("images/Beach_Image_Expo"+str(i)+".png","images/Beach_Image_Expo"+str(i+1)+".png",i*.1))
+        gif_exponential.append(each_image_exponential)
+    
+    imageio.mimsave("linear_result.gif", gif_linear, 'GIF')
+    imageio.mimsave("exponential_result.gif", gif_exponential, 'GIF')
+
+    # im.show()
 
 
 if __name__ == "__main__":
